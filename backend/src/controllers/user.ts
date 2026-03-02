@@ -6,7 +6,7 @@ import { generateToken } from "../utils/generateToken";
 // @route POST/api/users/registerUser
 // @access private(Admin and teacher only)
 
-export const registerUser = async ( req: Request, res: Response ): Promise<void> => {
+export const register = async ( req: Request, res: Response ): Promise<void> => {
     try {
         const {
             name, email, password, role, studentClass, teacherSubject, isActive
@@ -17,6 +17,7 @@ export const registerUser = async ( req: Request, res: Response ): Promise<void>
         if(existingUser)
         {
             res.status(400).json({ message: "User already exists" });
+            return;
         }
 
         //create user
@@ -63,9 +64,12 @@ export const login = async (req: Request, res: Response) => {
         // check if user exists and password matches
         if(user && (await user.matchPassword(password))){
             // generate token
-            generateToken
+            generateToken(user.id.toString(), res);
+            res.json(user);
+        }else{
+            res.status(401).json({ message: "Invalid email or password" });
         }
     } catch (error) {
-        
+        res.status(500).json({ message: "Server Error", error });
     }
 };

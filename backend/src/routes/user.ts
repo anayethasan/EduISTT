@@ -1,8 +1,12 @@
 import express from "express";
 const userRoutes = express.Router();
 
-import { registerUser } from "../controllers/user";
+import { register, login } from "../controllers/user";
+import { protect, authorize } from "../middleware/auth";
 
-userRoutes.post("/register", registerUser);
+// make sure to protect to get access to the user token
+userRoutes.post("/register", protect, authorize(["admin", "teacher"]), register);
+userRoutes.post("/login", login);
 
 export default userRoutes;
+// protect routes also add rolebased access
