@@ -1,6 +1,7 @@
 import { type Request, type Response } from "express";
 import User from "../models/user";
 import { generateToken } from "../utils/generateToken";
+import { logActivity } from "../utils/activiteslog";
 
 // @dsc Register a new user
 // @route POST/api/users/registerUser
@@ -32,6 +33,14 @@ export const register = async ( req: Request, res: Response ): Promise<void> => 
         }); 
 
         if(newUser) {
+            // we don't have req.user type define , so we use a type assertion
+            if((req as any).user) {
+                await logActivity({
+                    userId: (req as any).user._id,
+                    action: "Registered User",
+                    details: `Registered user with email: ${newUser.email}`, 
+                })
+            }
             res.status(201).json({
                 _id: newUser._id,
                 name: newUser.name,
@@ -41,7 +50,7 @@ export const register = async ( req: Request, res: Response ): Promise<void> => 
                 studentClass: newUser.studentClass,
                 teacherSubject: newUser.teacherSubject,
                 message: "User registered successfully"
-            })
+            });
         }
         else
         {
@@ -56,19 +65,53 @@ export const register = async ( req: Request, res: Response ): Promise<void> => 
 // @route POST/api/user/login
 // @access Public
 
-export const login = async (req: Request, res: Response) => {
+// export const login = async (req: Request, res: Response) => {
+//     try {
+//         const { email, password } = req.body;
+//         const user = await User.findOne({ email });
+
+//         // check if user exists and password matches
+//         if(user && (await user.matchPassword(password))){
+//             // generate token
+//             generateToken(user.id.toString(), res);
+//             res.json(user);
+//         }else{
+//             res.status(401).json({ message: "Invalid email or password" });
+//         }
+//     } catch (error) {
+//         res.status(500).json({ message: "Server Error", error });
+//     }
+// };
+
+// login without bug
+export const login = async (req: Request, res: Response): Promise<void> => {
     try {
         const { email, password } = req.body;
         const user = await User.findOne({ email });
 
-        // check if user exists and password matches
-        if(user && (await user.matchPassword(password))){
-            // generate token
-            generateToken(user.id.toString(), res);
-            res.json(user);
-        }else{
+        if (!user || !(await user.matchPassword(password))) {
             res.status(401).json({ message: "Invalid email or password" });
+            return;
         }
+
+        // Check if account is active
+        if (!user.isActive) {
+            res.status(403).json({ message: "Account is deactivated" });
+            return;
+        }
+
+        // Generate token
+        generateToken(user._id.toString(), res);
+
+        res.json({
+            _id: user._id,
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            isActive: user.isActive,
+            studentClass: user.studentClass,
+            teacherSubject: user.teacherSubject,
+        });
     } catch (error) {
         res.status(500).json({ message: "Server Error", error });
     }

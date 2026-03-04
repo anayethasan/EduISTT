@@ -9,6 +9,7 @@ import dotenv from "dotenv";
 import cors from "cors";
 import { connectDB } from "./config/db";
 import userRoutes from "./routes/user";
+import LogsRouter from "./routes/activitieslog";
 
 
 dotenv.config();
@@ -37,6 +38,7 @@ app.get("/home", (req: Request, res: Response) => {
 
 // import user routes
 app.use("/api/users", userRoutes);
+app.use("/api/activities", LogsRouter); 
 
 // cors-origin resource sharing (Cors) middleware
 // credentials : true is allows cookies to be sent with request
