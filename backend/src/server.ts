@@ -10,6 +10,9 @@ import cors from "cors";
 import { connectDB } from "./config/db";
 import userRoutes from "./routes/user";
 import LogsRouter from "./routes/activitieslog";
+import academicYearRouter from "./routes/academicYear";
+import classRouter from "./routes/class";
+
 
 
 dotenv.config();
@@ -39,6 +42,8 @@ app.get("/home", (req: Request, res: Response) => {
 // import user routes
 app.use("/api/users", userRoutes);
 app.use("/api/activities", LogsRouter); 
+app.use("/api/academic-years", academicYearRouter);
+app.use("/api/classes", classRouter);
 
 // cors-origin resource sharing (Cors) middleware
 // credentials : true is allows cookies to be sent with request
